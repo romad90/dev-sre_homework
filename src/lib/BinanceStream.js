@@ -14,6 +14,9 @@ const WebSocket = require('ws')
  **/
 
 const URL = `wss://stream.binance.com:9443/ws`
+const ACTIVITY_PERIOD = 60000 * 10
+const PRINT_INTERVAL = 60000
+const PING_INTERVAL = 60000 / 5
 const { MaxHeap, MinHeap } = require('./Heap.js')
 
 /**
@@ -33,15 +36,19 @@ class BinanceStream {
         this.maxHeap = new MaxHeap()
         this.minHeap = new MinHeap()
         this.rawLatencies = []
-        this.sumLatencies = 0
-
+        this.sumLatencies = 0    
+    }
+    connect(cb) {
+        if (cb && typeof cb !== 'function') {
+            throw new Error('cb must be a function')
+        }
         this.socket.on('open', () => {
             console.info(`empty websocket created to :: ${URL}`)
             setTimeout(() => {
                 this.socket.send(JSON.stringify({
                     "method": "SUBSCRIBE",
                     "params":[
-                        `${market}`
+                        `${this.market}`
                     ],
                     "id": this.id
                 }))
@@ -50,9 +57,15 @@ class BinanceStream {
 
         this.socket.on('message', (msg) => {
             const data = JSON.parse(msg.toString())
-
+            
             if (this.cnt === 0 && data && data.result === null) {
-                console.info(`LIVE subscribing to ${market} OK`)
+                console.info(`LIVE subscribing to ${this.market} OK`)
+                if (cb) {
+                    cb(null)
+                }
+            } else if (data.code) {
+                console.error(data)
+                this.socket.close(1)
             }
             this.cnt++
         })
@@ -62,7 +75,7 @@ class BinanceStream {
         })
 
         this.socket.on('close', () => {
-            console.info(`disconnected from :: ${market}.`)
+            console.info(`disconnected from :: ${this.market}.`)
             console.info(`counter: ${this.cnt} sockets received.`)
             clearInterval(this.pingInterval)
             clearInterval(this.printInterval)
@@ -82,18 +95,22 @@ class BinanceStream {
             this.socket.pong()
         }) 
         
+
+        //in order to make x ping call < 6/min, to not spam the Websocket server.
         this.pingInterval = setInterval(() => {
            performance.mark('A')
            this.socket.ping()
-        }, 60000/5)
+        }, PING_INTERVAL)
 
         this.printInterval = setInterval(() => {
            console.log(`${this.market} ==> maxLatency: ${this.getMax()} ms, minLatency:${this.getMin()} ms, avgLatency: ${this.getAvg()} ms. Next report in 1 minute...`)
-        }, 60000)
+        }, PRINT_INTERVAL)
 
         setTimeout(() => {
             this.socket.close(1000)
-        }, 60000 * 10)
+        }, ACTIVITY_PERIOD)
+
+
     }
     getMax () {
         return this.maxHeap.peek()

@@ -16,21 +16,20 @@
 
 Binance trading platerform aims to provide the same degree of customer service to users all over the world. To achieve that, a distributed system application is the way to go by replicate cluster of applications to every geographical critical locations to reduce latency.
 
-## Strategy
+## Approach
 Quick reminder, network latency is the time it takes for data or a request to go from the source to the destination. Latency in networks is measured in milliseconds. The closer your latency is to zero, the better.
 
-By taking a little height, and emphasizing the design, the goal is to be able to measure the latency on any Binance websocket stream. Knowing that we only have informations allowing us to connect to these market flows.
+Taking a step back, and emphasizing the design, the general purpose of this challenge is to be able to measure the latency on any Binance WebSocket streams. We only have information allowing us to connect to these market flows.
 
-To do so, we will rely on ping-pong events implemented, allowing the server to be informed that the client is still connected and that he can continue to receive market flows.
+To do so, we will rely on ping-pong events implemented, allowing Binance WebSocket servers to be informed that clients are still connected and they can continue to receive market flows.
 
-To process the volumetry of the data, we will rely on MaxHeap and MinHeap in order to know at any time the average, maximum and minimum latency observed. Using this datastructure allow us to be reactive, and also give us room of options if we need for example to know what it the kth max or min latency.
+To process the volumetry of the data, we will rely on MaxHeap and MinHeap to know at any time, the maximum and minimum latency observed. Using this data structure allows us to be reactive, and also gives us room for options if we need for example to know what the kth max or min latency is. We will sum up all the network latencies observed to compute the average.
 
 ## How to setup
 
 ```
-npm install or yarn install
-
-npm run start or yarn run start
-
-# By default, the script will run during 10 minutes and stop.
+git clone https://github.com/romad90/dev-sre_homework.git
+cd dev-sre_homework
+yarn install
+yarn run start              # By default, the script will run during 10 minutes and stop.
 ```

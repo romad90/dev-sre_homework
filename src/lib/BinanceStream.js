@@ -14,10 +14,12 @@ const WebSocket = require('ws')
  **/
 
 const URL = `wss://stream.binance.com:9443/ws`
-const ACTIVITY_PERIOD = 60000 * 10
+const ACTIVITY_PERIOD = process.argv[2] && typeof +process.argv[2] === 'number' ? 60000 * process.argv[2]  : 60000 * 10
 const PRINT_INTERVAL = 60000
 const PING_INTERVAL = 60000 / 5
 const { MaxHeap, MinHeap } = require('./Heap.js')
+
+console.info(`OBSERVATION PERIOD: ${ACTIVITY_PERIOD/60000} minutes.`)
 
 /**
  * Stream: wrapper to connect to any Binance market streams and collects latencies every 5times/min.

@@ -16,7 +16,7 @@ const WebSocket = require('ws')
 const URL = `wss://stream.binance.com:9443/ws`
 const ACTIVITY_PERIOD = process.argv[2] && typeof +process.argv[2] === 'number' ? 60000 * process.argv[2]  : 60000 * 10
 const PRINT_INTERVAL = 60000
-const PING_INTERVAL = 60000 / 5
+const PING_INTERVAL = 60000 / 5.5
 const { MaxHeap, MinHeap } = require('./Heap.js')
 
 console.info(`OBSERVATION PERIOD: ${ACTIVITY_PERIOD/60000} minutes.`)
@@ -47,6 +47,7 @@ class BinanceStream {
         this.socket.on('open', () => {
             console.info(`empty websocket created to :: ${URL}`)
             setTimeout(() => {
+                performance.mark('X')
                 this.socket.send(JSON.stringify({
                     "method": "SUBSCRIBE",
                     "params":[
@@ -58,10 +59,19 @@ class BinanceStream {
         })
 
         this.socket.on('message', (msg) => {
+            if (this.cnt === 0) {
+                performance.mark('Y')
+            }
             const data = JSON.parse(msg.toString())
             
             if (this.cnt === 0 && data && data.result === null) {
-                console.info(`LIVE subscribing to ${this.market} OK`)
+                const duration = performance.measure('latency', 'X', 'Y').duration
+                this.maxHeap.insert(duration)
+                this.minHeap.insert(duration)
+                this.rawLatencies.push(duration)
+                this.sumLatencies += duration
+                this.i++
+                console.info(`LIVE subscribing to ${this.market} OK in ${duration} ms`)
                 if (cb) {
                     cb(null)
                 }
@@ -106,6 +116,8 @@ class BinanceStream {
 
         this.printInterval = setInterval(() => {
            console.log(`${this.market} ==> maxLatency: ${this.getMax()} ms, minLatency:${this.getMin()} ms, avgLatency: ${this.getAvg()} ms. Next report in 1 minute...`)
+           //console.log(this.rawLatencies)
+           //console.log("\n")
         }, PRINT_INTERVAL)
 
         setTimeout(() => {

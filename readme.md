@@ -31,5 +31,5 @@ To process the volumetry of the data, we will rely on MaxHeap and MinHeap to kno
 git clone https://github.com/romad90/dev-sre_homework.git
 cd dev-sre_homework
 yarn install
-yarn run start              # By default, the script will run during 10 minutes and stop.
+yarn run start              # By default, the script will run during 10 minutes and stop. You can specify an integer in minutes. Ex: yarn run start 25`
 ```
